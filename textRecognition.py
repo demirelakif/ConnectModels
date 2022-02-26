@@ -7,16 +7,16 @@ import keras
 char_list = ['#', '%', "'", '(', ')', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '=', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ı']
 
 
-def recognition(path="yolo_crop"):
+def recognition(model_weight_path):
     images = []
     for i in os.listdir("yolo_crop"):
-        img = cv2.imread(path+"/"+i,cv2.COLOR_RGB2BGR)
+        img = cv2.imread("yolo_crop"+"/"+i,cv2.COLOR_RGB2BGR)
         img = cv2.resize(img,(128,32))
         images.append(img)
     
 
     model = Model()
-    model.load_weights("modelWeigght")
+    model.load_weights(model_weight_path)
 
 
     prediction_model = keras.models.Model(

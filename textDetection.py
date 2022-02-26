@@ -3,11 +3,12 @@ import numpy as np
 
 def predict(image):
 
-    net = cv2.dnn.readNet("yolov3_custom.cfg","yolov3_custom_best.weights")
+    net = cv2.dnn.readNetFromDarknet("yolov3_custom_best.weights","yolov3_custom.cfg")
     classes = ["text"]
-
+    print(image)
     img = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
     height, width = img.shape
+    print(img.shape)
     blob = cv2.dnn.blobFromImage(
         img, 1/255, (512, 512), (0, 0, 0), swapRB=True, crop=False)
     net.setInput(blob)
@@ -31,11 +32,11 @@ def predict(image):
 
                 x = int(center_x - w/2)
                 y = int(center_y - h/2)
-
+                
                 boxes.append([x, y, w, h])
                 confidences.append(float(confidence))
                 class_ids.append(class_id)
-
+    
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
     font = cv2.FONT_HERSHEY_PLAIN
