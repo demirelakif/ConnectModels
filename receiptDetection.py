@@ -7,7 +7,7 @@ os.environ['SM_FRAMEWORK'] = 'tf.keras'
 import segmentation_models as sm
 from perspective import perspective
 
-def detectReceipts(image,name,weights_path):
+def detectReceipts(image,name,weights_path,target_path):
 
 
     # Modeli ve ağırlıkları yükler. (Ağırlık Path'ı değiştirilmeli)
@@ -31,6 +31,6 @@ def detectReceipts(image,name,weights_path):
     pr_mask_bgr = cv2.resize(pr_mask_bgr, dim, interpolation = cv2.INTER_AREA)
     img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
     #cv2.imwrite(i,img)
-    cv2.imwrite(str("temp"+"/"+name+".jpg"),pr_mask_bgr)
+    cv2.imwrite(str(target_path+"/"+name+".jpg"),pr_mask_bgr)
     #cv2.imwrite("test_sonuc/"+i,img)
-    perspective()
+    perspective(target_path)

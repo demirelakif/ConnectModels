@@ -6,13 +6,12 @@ from time import perf_counter
 import helpers
 import math
 
-def perspective():
-    fil = os.listdir("temp")
+def perspective(f):
+    fil = os.listdir(f)
 
     for fileName in fil:
-        print(filename)
-        img = cv2.imread("temp/" + fileName,0)
-        image = cv2.imread("" + fileName)
+        img = cv2.imread(f+"/" + fileName,0)
+        image = cv2.imread("/" + fileName)
         #print(fileName)
         #st = perf_counter()
         h, w = img.shape

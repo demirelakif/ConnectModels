@@ -22,10 +22,18 @@ flags.DEFINE_string('recognition_weights_path', '/content/',
 flags.DEFINE_string('image', '',
                     'image file')
 
+flags.DEFINE_string('receiptDetectionTarget_path', '',
+                    'receipt detection target path')
+
+flags.DEFINE_string('recognition_weights_path', '/content/',
+                    'path to recognition weights file')
+
 def main(args):
 
     resm = FLAGS.image
     name = resm.split(".")[0]
+    if ("/" in name):
+        name = name.split("/")[-1]
 
     receipt_weights_path = FLAGS.receipt_weights_path
     yolo_weight_path = FLAGS.yolo_weights_path
@@ -36,7 +44,7 @@ def main(args):
     
     img = cv2.imread(resm)
     start_time = time.time()
-    detectReceipts(img,name,receipt_weights_path)
+    detectReceipts(img,name,receipt_weights_path,FLAGS.receiptDetectionTarget_path)
     print("--- receipt detection %s seconds ---" % (time.time() - start_time))
     start_time = time.time()
     detect_text(resm,yolo_weight_path,yolo_cfg_path)
