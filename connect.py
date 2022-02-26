@@ -5,7 +5,7 @@ from receiptDetection import detectReceipts
 from textRecognition import recognition
 from detectionYolov4 import detect_text
 import time
-from absl import flags
+from absl import flags,app
 
 flags.DEFINE_string('receipt_weights_path', '/content/500_loss_0.08_iou_0.97.h5',
                     'path to receipt weights file')
@@ -21,15 +21,18 @@ flags.DEFINE_string('recognition_weights_path', '/content/',
 
 flags.DEFINE_string('image', '',
                     'image file')
-resm = FLAGS.image
-name = resm.split(".")[0]
 
-receipt_weights_path = FLAGS.receipt_weights_path
-yolo_weight_path = FLAGS.yolo_weights_path
-yolo_cfg_path = FLAGS.yolo_cfg_path
-recognition_weights_path = FLAGS.recognition_weights_path
+def main(args):
 
-def main():
+    resm = FLAGS.image
+    name = resm.split(".")[0]
+
+    receipt_weights_path = FLAGS.receipt_weights_path
+    yolo_weight_path = FLAGS.yolo_weights_path
+    yolo_cfg_path = FLAGS.yolo_cfg_path
+    recognition_weights_path = FLAGS.recognition_weights_path
+
+
     
     img = cv2.imread(resm)
     start_time = time.time()
@@ -43,3 +46,5 @@ def main():
     print("--- text recognition %s seconds ---" % (time.time() - start_time))
 
 
+
+app.run(main)
