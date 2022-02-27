@@ -25,8 +25,6 @@ flags.DEFINE_string('image', '',
 flags.DEFINE_string('receiptDetectionTarget_path', '',
                     'receipt detection target path')
 
-flags.DEFINE_string('recognition_weights_path', '/content/',
-                    'path to recognition weights file')
 
 def main(args):
 

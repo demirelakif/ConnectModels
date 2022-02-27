@@ -27,7 +27,6 @@ def detect_text(image,yolo_weight_path,yolo_cfg_path):
         color = COLORS[int(classid) % len(COLORS)]
         (x,y,w,h) = box
         cv2.rectangle(img, box, color, 2)
-        print(box)
         cropped = crop_img[y-5:y+h+5, x-5:x+w+5]
         cv2.imwrite("yolo_crop/"+str(k)+".jpg", cropped)
 
