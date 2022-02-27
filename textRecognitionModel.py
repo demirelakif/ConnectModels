@@ -87,10 +87,10 @@ def Model(epochs=0):
 
 
     #model to be used at training time
-    model = Model(inputs=[inputs, labels], outputs=output)
+    model = keras.models.Model(inputs=[inputs, labels], outputs=output)
     model.compile(optimizer = "adam")
 
-    prediction_model = Model(inputs=inputs, outputs=softmax_output)
+    prediction_model = keras.models.Model(inputs=inputs, outputs=softmax_output)
     return prediction_model
 
     

@@ -129,10 +129,10 @@ def perspective(f):
             PerspectiveImage = cv2.warpPerspective(image,PerspectiveTransform,(PerspectiveWidth,PerspectiveHeight))
             #fn = perf_counter()
             #print(fn - st)
-            cv2.imwrite("perspective/" + fileName,PerspectiveImage)
+            cv2.imwrite("/content/ConnectModels/perspective/" + fileName,PerspectiveImage)
 
         else:
             image = helpers.get_segment_crop(image.squeeze(),0,img.squeeze())
-            cv2.imwrite("perspective/" + fileName,image)
+            cv2.imwrite("/content/ConnectModels/perspective/" + fileName,image)
             #fn = perf_counter()
             #print(fn - st)
