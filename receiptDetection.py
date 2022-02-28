@@ -10,11 +10,10 @@ from perspective import perspective
 def detectReceipts(image,name,weights_path,target_path):
 
 
-    # Modeli ve ağırlıkları yükler. (Ağırlık Path'ı değiştirilmeli)
     BACKBONE = 'mobilenetv2'
     model = sm.Unet(BACKBONE,input_shape=(512, 512, 3), encoder_weights=None,classes=1,activation='sigmoid')
     model.load_weights(weights_path)
-
+    real_img = image
 
     h,w,c = image.shape
     dim = (w, h)
@@ -30,7 +29,8 @@ def detectReceipts(image,name,weights_path,target_path):
     pr_mask_bgr = cv2.cvtColor(pr_mask,cv2.THRESH_BINARY)
     pr_mask_bgr = cv2.resize(pr_mask_bgr, dim, interpolation = cv2.INTER_AREA)
     img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
-    #cv2.imwrite(i,img)
-    cv2.imwrite(str(target_path+"/"+name+".jpg"),pr_mask_bgr)
-    #cv2.imwrite("test_sonuc/"+i,img)
-    perspective(target_path)
+    
+    #cv2.imwrite(str(target_path+"/"+name+".jpg"),pr_mask_bgr)
+    
+    persp_img = perspective(pr_mask_bgr,real_img,target_path)
+    return persp_img

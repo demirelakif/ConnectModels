@@ -10,16 +10,60 @@ char_list = ['a', 'A', 'b', 'B', 'c', 'C', 'ç', 'Ç', 'd', 'D', 'e', 'E', 'f', 
 def recognition(model_weight_path):
     prediction_model = Model()
     prediction_model.load_weights(model_weight_path)
-    for k in os.listdir("/content/ConnectModels/yolo_crop"):
-      fileName = "/content/ConnectModels/yolo_crop/" + k
+    words = []
+    for k in os.listdir("yolo_crop"):
+      fileName = "yolo_crop/" + k
       img = cv2.imread(fileName,0)
       img = cv2.resize(img,(128,32))
 
       preds = prediction_model.predict(img.reshape(-1,32,128,1),batch_size=1)
       input_len = np.ones(preds.shape[0]) * preds.shape[1]
       results = keras.backend.ctc_decode(preds, input_length=input_len, greedy=True)[0][0]
-
+      coordinates = k.replace("[","").replace("]","")
+      coordinates = coordinates.split(" ")
+      x , y , w ,h = coordinates
+      minY, maxY, minX, maxX = y-h , y+h , x - w , x + w
       res = "".join([char_list[i] for i in results[0] if i != -1 and i < len(char_list)])
+      words.append([minY,minX,maxY,maxX,res])
 
-      print(res)
-    
+
+    lines = []
+    temp = []
+
+    # Aynı hizada olan kelimeleri bulup satırların tutulduğu listeye ekliyor.
+    for i in range(len(sorted(words)) - 1):
+      minY,minX,maxY,maxX, word0 = sorted(words)[i]
+
+      y0 = int(maxY - ((maxY - minY)/2))
+
+      minY,minX,maxY,maxX, word1 = sorted(words)[i + 1]
+      avgwordHeight = (maxY - minY) * 3 / 5
+
+      y1 = int(maxY - ((maxY - minY)/2))
+          
+      if (y1 - y0) < avgwordHeight:
+        temp.append(sorted(words)[i])
+      else:
+        temp.append(sorted(words)[i])
+        lines.append(temp.copy())
+        temp = []
+
+    newText = ""
+
+    # Kelimeler satır satır newText stringine ekleniyor.
+    for line in lines:
+      for i in range(len(line)):
+          line[i][0] = line[0][0]
+      
+      text = ""
+      
+      avgX = [int((i[3] + i[1])/2) for i in line]
+
+      
+      for i in range(len(line)):
+          minY,minX,maxY,maxX, word = line[avgX.index(sorted(avgX)[i])]
+          text += word + " "
+          
+      text = text.strip()
+      newText += text + "\n"
+      print(newText)
