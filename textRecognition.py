@@ -7,12 +7,12 @@ import keras
 char_list = ['a', 'A', 'b', 'B', 'c', 'C', 'ç', 'Ç', 'd', 'D', 'e', 'E', 'f', 'F', 'g', 'G', 'ğ', 'Ğ', 'h', 'H', 'ı', 'I', 'i', 'İ', 'j', 'J', 'k', 'K', 'l', 'L', 'm', 'M', 'n', 'N', 'o', 'O', 'ö', 'Ö', 'p', 'P', 'q', 'Q', 'r', 'R', 's', 'S', 'ş', 'Ş', 't', 'T', 'u', 'U', 'ü', 'Ü', 'v', 'V', 'w', 'W', 'x', 'X', 'y', 'Y', 'z', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', ':', '/', ',', '.', '#', '+', '%', ';', '=', '(', ')', "'"]
 
 
-def recognition(model_weight_path):
+def recognition(model_weight_path,crop_path):
     prediction_model = Model()
     prediction_model.load_weights(model_weight_path)
     words = []
-    for k in os.listdir("yolo_crop"):
-      fileName = "yolo_crop/" + k
+    for k in os.listdir(crop_path):
+      fileName = crop_path +"/" + k
       img = cv2.imread(fileName,0)
       img = cv2.resize(img,(128,32))
 
@@ -24,7 +24,7 @@ def recognition(model_weight_path):
       coordinates = coordinates.split(" ")
       x , y , w ,h  = coordinates
       x , y , w ,h = int(x) , int(y), int(w), int(h)
-      minY, maxY, minX, maxX = y-h , y+h , x - w , x + w
+      minY, maxY, minX, maxX = y , y+h , x , x + w
       res = "".join([char_list[i] for i in results[0] if i != -1 and i < len(char_list)])
       words.append([minY,minX,maxY,maxX,res])
 

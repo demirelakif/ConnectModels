@@ -25,6 +25,9 @@ flags.DEFINE_string('image', '',
 flags.DEFINE_string('receiptDetectionTarget_path', 'temp',
                     'receipt detection target path')
 
+flags.DEFINE_string('texDetectionTarget_path', '',
+                    'text detection target path')
+
 
 def main(args):
 
@@ -47,11 +50,11 @@ def main(args):
     
     
     start_time = time.time()
-    detect_text(receipt_img,yolo_weight_path,yolo_cfg_path)
+    detect_text(receipt_img,yolo_weight_path,yolo_cfg_path,FLAGS.texDetectionTarget_path)
     print("--- text detection %s seconds ---" % (time.time() - start_time))
 
     start_time = time.time()
-    recognition(recognition_weights_path)
+    recognition(recognition_weights_path,FLAGS.texDetectionTarget_path)
     print("--- text recognition %s seconds ---" % (time.time() - start_time))
 
 
