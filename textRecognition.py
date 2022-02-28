@@ -19,9 +19,11 @@ def recognition(model_weight_path):
       preds = prediction_model.predict(img.reshape(-1,32,128,1),batch_size=1)
       input_len = np.ones(preds.shape[0]) * preds.shape[1]
       results = keras.backend.ctc_decode(preds, input_length=input_len, greedy=True)[0][0]
-      coordinates = k.replace("[","").replace("]","")
+      coordinates = k.split(".")[0]
+      
       coordinates = coordinates.split(" ")
-      x , y , w ,h = coordinates
+      x , y , w ,h  = coordinates
+      x , y , w ,h = int(x) , int(y), int(w), int(h)
       minY, maxY, minX, maxX = y-h , y+h , x - w , x + w
       res = "".join([char_list[i] for i in results[0] if i != -1 and i < len(char_list)])
       words.append([minY,minX,maxY,maxX,res])
@@ -29,7 +31,6 @@ def recognition(model_weight_path):
 
     lines = []
     temp = []
-
     # Aynı hizada olan kelimeleri bulup satırların tutulduğu listeye ekliyor.
     for i in range(len(sorted(words)) - 1):
       minY,minX,maxY,maxX, word0 = sorted(words)[i]
@@ -66,4 +67,4 @@ def recognition(model_weight_path):
           
       text = text.strip()
       newText += text + "\n"
-      print(newText)
+    print(newText)

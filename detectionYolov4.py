@@ -26,7 +26,8 @@ def detect_text(image,yolo_weight_path,yolo_cfg_path):
     for k,(classid, score, box) in enumerate(zip(classes, scores, boxes)):
         (x,y,w,h) = box
         cropped = crop_img[y-3:y+h+3, x-3:x+w+3]
-        cv2.imwrite("yolo_crop/"+str(box)+".jpg", cropped)
+        name = str(int(x))+" "+str(int(y))+" "+str(int(w))+" "+str(int(h))
+        cv2.imwrite("/content/ConnectModels/yolo_crop/"+str(name)+".jpg", cropped)
 
 
 
