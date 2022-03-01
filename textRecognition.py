@@ -87,6 +87,7 @@ def recognition(prediction_model,crop_path):
       newText += text + "\n"
     print(newText)
 
+    return newText
     
 
      
