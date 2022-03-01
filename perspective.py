@@ -1,12 +1,10 @@
-from fileinput import filename
 import os
 import cv2
 import numpy as np
-from time import perf_counter
 import helpers
 import math
-
-def perspective(img,image,f):
+#
+def perspective(img,image):
     #fileName = f.split(".")[0]
     #img = cv2.imread(f+"/" + fileName,0)
     #image = cv2.imread("" + fileName)

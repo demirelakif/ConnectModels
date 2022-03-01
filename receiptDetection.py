@@ -6,13 +6,8 @@ from matplotlib import image
 os.environ['SM_FRAMEWORK'] = 'tf.keras'
 import segmentation_models as sm
 from perspective import perspective
-
-def detectReceipts(image,name,weights_path,target_path):
-
-
-    BACKBONE = 'mobilenetv2'
-    model = sm.Unet(BACKBONE,input_shape=(512, 512, 3), encoder_weights=None,classes=1,activation='sigmoid')
-    model.load_weights(weights_path)
+#
+def detectReceipts(image,name,model):
     real_img = image
 
     h,w,c = image.shape
@@ -32,5 +27,5 @@ def detectReceipts(image,name,weights_path,target_path):
     
     #cv2.imwrite(str(target_path+"/"+name+".jpg"),pr_mask_bgr)
     
-    persp_img = perspective(pr_mask_bgr,real_img,target_path)
+    persp_img = perspective(pr_mask_bgr,real_img)
     return persp_img
