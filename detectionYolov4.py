@@ -21,14 +21,15 @@ def detect_text(image,model,save_path):
 
     for k,(classid, score, box) in enumerate(zip(classes, scores, boxes)):
         (x,y,w,h) = box
-        cv2.rectangle(img,(x,y),(x+w,y+h),(255,255,255),2)
+        cv2.rectangle(img,(x,y),(x+w,y+h),(91, 0, 255),2)
         try:
           cropped = crop_img[y-3:y+h+3, x-3:x+w+3]
           name = str(int(x))+" "+str(int(y))+" "+str(int(w))+" "+str(int(h))
           cv2.imwrite(save_path+"/"+str(name)+".jpg", cropped)
         except:
           pass
-        
+
+    return img     
 
 
 
