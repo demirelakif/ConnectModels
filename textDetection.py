@@ -1,69 +1,59 @@
 import cv2
 import numpy as np
+import tensorflow as tf
 
-def predict(image):
+def detect_text(img,model,target_path):
 
-    net = cv2.dnn.readNetFromDarknet("yolov3_custom_best.weights","yolov3_custom.cfg")
-    classes = ["text"]
-    print(image)
-    img = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
-    height, width = img.shape
-    print(img.shape)
-    blob = cv2.dnn.blobFromImage(
-        img, 1/255, (512, 512), (0, 0, 0), swapRB=True, crop=False)
-    net.setInput(blob)
-    output_layers_names = net.getUnconnectedOutLayersNames()
-    layerOutputs = net.forward(output_layers_names)
+  original_image = img
+  img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+  img = cv2.resize(img,(512,512))
+  img = np.reshape(img,(-1,512,512,1))
 
-    boxes = []
-    confidences = []
-    class_ids = []
+  images_data = []
+  images_data = np.reshape(img,(1,512,512,1))
+  images_data = images_data / 255.
+  images_data = np.asarray(images_data).astype(np.float32)
 
-    for output in layerOutputs:
-        for detection in output:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-            if confidence > 0.7:
-                center_x = int(detection[0]*width)
-                center_y = int(detection[1]*height)
-                w = int(detection[2]*width)
-                h = int(detection[3]*height)
+  batch_data = tf.constant(images_data)
 
-                x = int(center_x - w/2)
-                y = int(center_y - h/2)
-                
-                boxes.append([x, y, w, h])
-                confidences.append(float(confidence))
-                class_ids.append(class_id)
+  pred_bbox = model.predict(batch_data)
+
+
+  boxes = pred_bbox[:, :, 0:4]
+  pred_conf = pred_bbox[:, :, 4:]
+
+  boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
+      boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
+      scores=tf.reshape(
+          pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
+      max_output_size_per_class=1000,
+      max_total_size=1000,
+      iou_threshold=0.2,
+      score_threshold=0.3
+  )
+
+  pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
+
+  out_boxes, out_scores, out_classes, num_boxes = pred_bbox
+
+  imgH, imgW, _ = original_image.shape
+  for i in range(num_boxes[0]):
     
-    indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
-    font = cv2.FONT_HERSHEY_PLAIN
+    coor = out_boxes[0][i]
+    x1 = int(coor[0] * imgH)
+    x2 = int(coor[2] * imgH)
+    y1 = int(coor[1] * imgW)
+    y2 = int(coor[3] * imgW)
 
-    colors = np.random.uniform(0, 255, size=(len(boxes), 3))
+    c1, c2 = (y1, x1), (y2, x2)
+    
+    cv2.rectangle(original_image, c1, c2, (0,255,0), 1)
+    cropped = original_image[x1:x2,y1:y2]
+    name = str(int(y1))+" "+str(int(x1))+" "+str(int(y2))+" "+str(int(x2))
+    cv2.imwrite(target_path+"/"+str(name)+".jpg",cropped)
 
-    for i in indexes.flatten():
-
-        x, y, w, h = boxes[i]
-        label = str(classes[class_ids[i]])
-        confidence = str(round(confidences[i], 2))
-        color = colors[i]
-        cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 255), 2)
-
-        # print(len(boxes))
-        resm = cv2.imread(image)
-        for k, j in enumerate(boxes):
-            x, y, w, h = j
-            # print(x,y,w,h)
-            cropped = resm[y:y+h, x:x+w]
-            try:
-                cv2.imwrite("yolo_crop/"+str(k)+".jpg", cropped)
-                # print(cropped)
-
-            except:
-                pass
-    cv2.imwrite("textDetection.jpg", img)
+  return original_image
 
 
 

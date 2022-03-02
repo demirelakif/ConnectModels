@@ -18,9 +18,9 @@ def recognition(prediction_model,crop_path):
       coordinates = k.split(".")[0]
       
       coordinates = coordinates.split(" ")
-      x , y , w ,h  = coordinates
-      x , y , w ,h = int(x) , int(y), int(w), int(h)
-      minY, maxY, minX, maxX = y , y+h , x , x + w
+      x1 , y1 , x2 ,y2  = coordinates
+      x1 , y1 , x2 ,y2 = int(x1) , int(y1), int(x2), int(y2)
+      minY, maxY, minX, maxX = y1 , y2 , x1 , x2
       words.append([minY,minX,maxY,maxX])
     
     images = np.array(images)
