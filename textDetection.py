@@ -4,7 +4,9 @@ import tensorflow as tf
 
 def detect_text(img,model,target_path):
 
-  original_image = img
+  original_image = img.copy()
+  cropImage = img.copy()
+
   img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
   img = cv2.resize(img,(512,512))
   img = np.reshape(img,(-1,512,512,1))
@@ -36,6 +38,8 @@ def detect_text(img,model,target_path):
 
   out_boxes, out_scores, out_classes, num_boxes = pred_bbox
 
+  wordList = []
+
   imgH, imgW, _ = original_image.shape
   for i in range(num_boxes[0]):
     
@@ -48,12 +52,16 @@ def detect_text(img,model,target_path):
 
     c1, c2 = (y1, x1), (y2, x2)
     
-    cv2.rectangle(original_image, c1, c2, (0,255,0), 1)
-    cropped = original_image[x1:x2,y1:y2]
-    name = str(int(y1))+" "+str(int(x1))+" "+str(int(y2))+" "+str(int(x2))
-    cv2.imwrite(target_path+"/"+str(name)+".jpg",cropped)
+    cv2.rectangle(original_image, c1, c2, (0,255,0), 2)
+    cropped = cropImage[x1:x2,y1:y2]
 
-  return original_image
+    name = str(int(y1))+" "+str(int(x1))+" "+str(int(y2))+" "+str(int(x2))
+
+    wordList.append([cropped,name])
+
+    # cv2.imwrite(target_path+"/"+str(name)+".jpg",cropped)
+
+  return original_image, wordList
 
 
 

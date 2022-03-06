@@ -7,15 +7,15 @@ import keras
 char_list = ['a', 'A', 'b', 'B', 'c', 'C', 'ç', 'Ç', 'd', 'D', 'e', 'E', 'f', 'F', 'g', 'G', 'ğ', 'Ğ', 'h', 'H', 'ı', 'I', 'i', 'İ', 'j', 'J', 'k', 'K', 'l', 'L', 'm', 'M', 'n', 'N', 'o', 'O', 'ö', 'Ö', 'p', 'P', 'q', 'Q', 'r', 'R', 's', 'S', 'ş', 'Ş', 't', 'T', 'u', 'U', 'ü', 'Ü', 'v', 'V', 'w', 'W', 'x', 'X', 'y', 'Y', 'z', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', ':', '/', ',', '.', '#', '+', '%', ';', '=', '(', ')', "'"]
 
 
-def recognition(prediction_model,crop_path):
+def recognition(prediction_model,wordList):
     images = []
     words = []
-    for k in os.listdir(crop_path):
-      fileName = crop_path +"/" + k
-      img = cv2.imread(fileName,0)
+    for word in wordList:
+      img = word[0]
       img = cv2.resize(img,(128,32))
+      img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
       images.append(img)
-      coordinates = k.split(".")[0]
+      coordinates = word[1]
       
       coordinates = coordinates.split(" ")
       x1 , y1 , x2 ,y2  = coordinates
@@ -23,12 +23,15 @@ def recognition(prediction_model,crop_path):
       minY, maxY, minX, maxX = y1 , y2 , x1 , x2
       words.append([minY,minX,maxY,maxX])
     
-    images = np.array(images)
+    images = np.array(images).reshape(-1,32,128,1)
 
-    preds = prediction_model.predict(images.reshape(-1,32,128,1),batch_size=64)
+
+    preds = prediction_model.predict(images,batch_size=128)
     input_len = np.ones(preds.shape[0]) * preds.shape[1]
     results = keras.backend.ctc_decode(preds, input_length=input_len, greedy=True)[0][0]
-    
+    results = results.numpy()
+
+
     for k in range(len(results)):
 
       res = "".join([char_list[i] for i in results[k] if i != -1 and i < len(char_list)])
@@ -46,6 +49,7 @@ def recognition(prediction_model,crop_path):
     #   print(i[4])
     #   if i[4] == None :
     #     pass
+
       
     lines = []
     temp = []

@@ -8,7 +8,7 @@ import segmentation_models as sm
 from perspective import perspective
 #
 def detectReceipts(image,name,model):
-    real_img = image
+    real_img = image.copy()
 
     h,w,c = image.shape
     dim = (w, h)
