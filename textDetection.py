@@ -43,19 +43,18 @@ def detect_text(img,model,target_path):
   imgH, imgW, _ = original_image.shape
   for i in range(num_boxes[0]):
     
-
     coor = out_boxes[0][i]
-    x1 = int(coor[0] * imgH)
-    x2 = int(coor[2] * imgH)
-    y1 = int(coor[1] * imgW)
-    y2 = int(coor[3] * imgW)
+    y1 = int(coor[0] * imgH)
+    y2 = int(coor[2] * imgH)
+    x1 = int(coor[1] * imgW)
+    x2 = int(coor[3] * imgW)
 
-    c1, c2 = (y1, x1), (y2, x2)
+    c1, c2 = (x1, y1), (x2, y2)
     
-    cv2.rectangle(original_image, c1, c2, (0,255,0), 2)
-    cropped = cropImage[x1:x2,y1:y2]
+    cv2.rectangle(original_image, c1, c2, (0,255,0), 1)
+    cropped = cropImage[y1:y2,x1:x2]
 
-    name = str(int(y1))+" "+str(int(x1))+" "+str(int(y2))+" "+str(int(x2))
+    name = str((x1))+" "+str((y1))+" "+str((x2))+" "+str((y2))
 
     wordList.append([cropped,name])
 
