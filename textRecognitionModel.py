@@ -19,7 +19,6 @@ from tensorflow.keras.optimizers import *
 from tensorflow.keras.utils import to_categorical, Sequence
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 
-char_list = ['a', 'A', 'b', 'B', 'c', 'C', 'ç', 'Ç', 'd', 'D', 'e', 'E', 'f', 'F', 'g', 'G', 'ğ', 'Ğ', 'h', 'H', 'ı', 'I', 'i', 'İ', 'j', 'J', 'k', 'K', 'l', 'L', 'm', 'M', 'n', 'N', 'o', 'O', 'ö', 'Ö', 'p', 'P', 'q', 'Q', 'r', 'R', 's', 'S', 'ş', 'Ş', 't', 'T', 'u', 'U', 'ü', 'Ü', 'v', 'V', 'w', 'W', 'x', 'X', 'y', 'Y', 'z', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', ':', '/', ',', '.', '#', '+', '%', ';', '=', '(', ')', "'"]
 
 
 class CTCLayer(layers.Layer):
@@ -47,41 +46,96 @@ class CTCLayer(layers.Layer):
         return y_pred
 
 
+def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True, activate_type='leaky'):
+    if downsample:
+        input_layer = tf.keras.layers.ZeroPadding2D(((1, 0), (1, 0)))(input_layer)
+        padding = 'valid'
+        strides = 2
+    else:
+        strides = 1
+        padding = 'same'
+        
+    conv = tf.keras.layers.Conv2D(filters=filters_shape[-1], kernel_size = filters_shape[0], strides=strides, padding=padding)(input_layer)
+
+    if bn: conv = BatchNormalization()(conv)
+    if activate == True:
+        if activate_type == "leaky":
+            conv = tf.nn.leaky_relu(conv, alpha=0.1)
+        elif activate_type == "mish":
+            conv = mish(conv)
+    return conv
+
+def mish(x):
+    return x * tf.math.tanh(tf.math.softplus(x))
+    # return tf.keras.layers.Lambda(lambda x: x*tf.tanh(tf.math.log(1+tf.exp(x))))(x)
+
+def residual_block(input_layer, input_channel, filter_num1, filter_num2, activate_type='leaky'):
+    short_cut = input_layer
+    conv = convolutional(input_layer, filters_shape=(1, 1, input_channel, filter_num1), activate_type=activate_type)
+    conv = convolutional(conv       , filters_shape=(3, 3, filter_num1,   filter_num2), activate_type=activate_type)
+
+    residual_output = short_cut + conv
+    return residual_output
+
+
 def Model(epochs=0):
     # input with shape of height=32 and width=128 
     inputs = Input(shape=(32, 128, 1), name="image")
-    #maxlen
+
     labels = layers.Input(name="label", shape=(20,), dtype="float32")
 
-    conv_1 = Conv2D(32, (3,3), activation = "selu", padding='same')(inputs)
+    conv_1 = convolutional(inputs, (1, 1,  3,  32))
+    conv_1 = convolutional(conv_1, (3, 3,  32,  32))
     pool_1 = MaxPool2D(pool_size=(2, 2))(conv_1)
 
-    conv_2 = Conv2D(64, (3,3), activation = "selu", padding='same')(pool_1)
+
+    conv_2 = convolutional(pool_1, (1, 1,  32,  64))
+    conv_2 = convolutional(conv_2, (3, 3,  64,  64))
     pool_2 = MaxPool2D(pool_size=(2, 2))(conv_2)
 
-    conv_3 = Conv2D(128, (3,3), activation = "selu", padding='same')(pool_2)
-    conv_4 = Conv2D(128, (3,3), activation = "selu", padding='same')(conv_3)
 
-    pool_4 = MaxPool2D(pool_size=(2, 1))(conv_4)
+    conv_3 = convolutional(pool_2, (1, 1,  64,  128))
+    conv_3 = convolutional(conv_3, (3, 3,  128,  128))
+    conv_3 = convolutional(conv_3, (3, 3,  128,  128))
+    pool_3 = MaxPool2D(pool_size=(2, 2))(conv_3)
 
-    conv_5 = Conv2D(256, (3,3), activation = "selu", padding='same')(pool_4)
+
+
+    conv_4 = convolutional(pool_3, (1, 1,  128,  256))
+    conv_4 = convolutional(conv_4, (3, 3,  256,  256))
+    conv_4 = convolutional(conv_4, (3, 3,  256,  256))
+    pool_4 = MaxPool2D(pool_size=(2, 2))(conv_4)
+
+
+
+    conv_5 = convolutional(pool_4, (1, 1,  256,  512))
+    conv_5 = convolutional(conv_5, (3, 3,  512,  512))
+    conv_5 = convolutional(conv_5, (3, 3,  512,  512))
+    pool_5 = MaxPool2D(pool_size=(2, 1))(conv_5)
+
+
+    dense_out = Dense(512,activation="relu",name="dense_1")(pool_5)
+
+    dense_out = Dense(256,activation="relu",name="dense_3")(dense_out)
+
+    dense_out = Dense(512,activation="relu",name="dense_4")(dense_out)
+
+    dense_add = pool_5 + dense_out
+
 
     # Batch normalization layer
-    batch_norm_5 = BatchNormalization()(conv_5)
+    batch_norm_5 = BatchNormalization()(dense_add)
 
-    conv_6 = Conv2D(256, (3,3), activation = "selu", padding='same')(batch_norm_5)
-    batch_norm_6 = BatchNormalization()(conv_6)
-    pool_6 = MaxPool2D(pool_size=(2, 1))(batch_norm_6)
+    squeezed = tf.squeeze(batch_norm_5,1)
 
-    conv_7 = Conv2D(64, (2,2), activation = "selu")(pool_6)
+    squeezed = tf.reshape(squeezed,(-1,32,128))
 
-    squeezed = tf.squeeze(conv_7,1)
 
     # bidirectional LSTM layers with units=128
     blstm_1 = Bidirectional(CuDNNLSTM(128, return_sequences=True))(squeezed)
     blstm_2 = Bidirectional(CuDNNLSTM(128, return_sequences=True))(blstm_1)
 
-    softmax_output = Dense(len(char_list) + 1, activation = 'softmax', name="dense")(blstm_2)
+    softmax_output = Dense(88, activation = 'softmax', name="dense")(blstm_2)
 
     output = CTCLayer(name="ctc_loss")(labels, softmax_output)
 
@@ -93,76 +147,3 @@ def Model(epochs=0):
     prediction_model = keras.models.Model(inputs=inputs, outputs=softmax_output)
     return prediction_model
 
-    
-    # # input with shape of height=32 and width=128 
-    # inputs = Input(shape=(32, 128, 1), name="image")
-
-    # labels = layers.Input(name="label", shape=(None,), dtype="float32")
-
-    # conv_1 = Conv2D(32, (3,3), activation = "selu", padding='same')(inputs)
-    # pool_1 = MaxPool2D(pool_size=(2, 2))(conv_1)
-    
-    # conv_2 = Conv2D(64, (3,3), activation = "selu", padding='same')(pool_1)
-    # pool_2 = MaxPool2D(pool_size=(2, 2))(conv_2)
-
-    # conv_3 = Conv2D(128, (3,3), activation = "selu", padding='same')(pool_2)
-    # conv_4 = Conv2D(128, (3,3), activation = "selu", padding='same')(conv_3)
-
-    # pool_4 = MaxPool2D(pool_size=(2, 1))(conv_4)
-    
-    # conv_5 = Conv2D(256, (3,3), activation = "selu", padding='same')(pool_4)
-    
-    # # Batch normalization layer
-    # batch_norm_5 = BatchNormalization()(conv_5)
-    
-    # conv_6 = Conv2D(256, (3,3), activation = "selu", padding='same')(batch_norm_5)
-    # batch_norm_6 = BatchNormalization()(conv_6)
-    # pool_6 = MaxPool2D(pool_size=(2, 1))(batch_norm_6)
-    
-    # conv_7 = Conv2D(64, (2,2), activation = "selu")(pool_6)
-    
-    # squeezed = Lambda(lambda x: K.squeeze(x, 1))(conv_7)
-    
-    # # bidirectional LSTM layers with units=128
-    # blstm_1 = Bidirectional(CuDNNLSTM(128, return_sequences=True))(squeezed)
-    # blstm_2 = Bidirectional(CuDNNLSTM(128, return_sequences=True))(blstm_1)
-
-    
-    # softmax_output = Dense(len(char_list) + 1, activation = 'softmax', name="dense")(blstm_2)
-
-    # output = CTCLayer(name="ctc_loss")(labels, softmax_output)
-
-
-    # optimizer = keras.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, clipnorm=1.0)
-
-    
-
-    # #model to be used at training time
-    # model = keras.models.Model(inputs=[inputs, labels], outputs=output)
-    # #model.load_weights('/content/TextRecognition_best.hdf5')
-    # model.compile(optimizer = optimizer)
-    
-
-    # # file_path = "TextRecognition_lower_Char_best.hdf5"
-    
-    # # checkpoint = ModelCheckpoint(filepath=file_path, 
-    # #                             monitor='val_loss', 
-    # #                             verbose=1, 
-    # #                             save_best_only=True, 
-    # #                             mode='min')
-
-    # # callbacks_list = [checkpoint, 
-    # #                   #PlotPredictions(frequency=1),
-    # #                   #EarlyStopping(patience=3, verbose=1)
-    # # ]
-
-    # # history = model.fit(#train_dataset, 
-    # #                     epochs = epochs,
-    # #                     #validation_data=validation_dataset,
-    # #                     verbose = 1,
-    # #                     callbacks = callbacks_list,
-    # #                     shuffle=True)
-
-    
-    
-    # return model

@@ -7,12 +7,12 @@ def detect_text(img,model,target_path):
   original_image = img.copy()
   cropImage = img.copy()
 
-  img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-  img = cv2.resize(img,(512,512))
-  img = np.reshape(img,(-1,512,512,1))
+  # img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+  img = cv2.resize(img,(608,608))
+  img = np.reshape(img,(-1,608,608,3))
 
   images_data = []
-  images_data = np.reshape(img,(1,512,512,1))
+  images_data = np.reshape(img,(1,608,608,3))
   images_data = images_data / 255.
   images_data = np.asarray(images_data).astype(np.float32)
 
